@@ -9,28 +9,50 @@ import XCTest
 @testable import PhotoGallery
 
 class PhotoGalleryTests: XCTestCase {
+    var photo: Photo?
 
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+        photo = nil
     }
 
     override func tearDownWithError() throws {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
+    func testPhotoDecoding() throws {
+        ///Given
+        photo = try? JSONDecoder().decode(Photo.self, from: PhotosAPI.listPhotos.samplePhotoData)
+        XCTAssertNotNil(photo)
+        XCTAssertEqual(1, photo?.albumID)
+        XCTAssertEqual("accusamus beatae ad facilis cum similique qui sunt", photo?.title)
+        XCTAssertEqual("https://via.placeholder.com/600/92c952", photo?.url)
+        XCTAssertEqual("https://via.placeholder.com/150/92c952", photo?.thumbnailURL)
     }
-
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
-        }
+    
+    func testPhotoCellSetup() throws {
+        photo = try? JSONDecoder().decode(Photo.self, from: PhotosAPI.listPhotos.samplePhotoData)
+        let cell = PhotoTableViewCell()
+        cell.photo = photo
+        XCTAssertEqual("accusamus beatae ad facilis cum similique qui sunt", cell.titleLabel.text)
+        
+        // Cell Should contain only two subviews: title and image
+        cell.configureCell()
+        XCTAssertEqual(2, cell.subviews.count)
+    }
+    
+    func testControllerSetup() throws {
+        let controller = PhotoListViewController()
+        XCTAssertEqual(0, controller.viewModel.photos.count)
+        controller.reloadData()
+        XCTAssertEqual(controller.tableView.numberOfRows(inSection: 0), 0)
+    }
+    
+    func testViewModelMockedData() {
+        let viewModel = PhotoListViewModel()
+        XCTAssertEqual(0, viewModel.photos.count)
+        let photos = try! JSONDecoder().decode([Photo].self, from: PhotosAPI.listPhotos.sampleData)
+        viewModel.photos = photos
+        XCTAssertEqual(1, viewModel.photos.count)
     }
 
 }
